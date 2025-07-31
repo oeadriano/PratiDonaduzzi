@@ -1,4 +1,7 @@
-https://storage.googleapis.com/storage/v1/b/gc-conteudo-prod/o?delimiter=%2F*&prefix=001%2F001%2F010%2F001%2F100183
+
+SELECT cast(ddl as STRING) as ddl
+FROM `ds_view_trusted.INFORMATION_SCHEMA.TABLES`
+WHERE table_name = 'vw_document_case'
  
 
 SELECT table_name, partition_id, total_rows, *
