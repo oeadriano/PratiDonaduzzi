@@ -1,0 +1,59 @@
+sch-account-bq-salesforce-trigger-prd
+	loop account:
+		Integration Name: sch-account-bq-salesforce-connector-prd
+	Triggger ID:
+		api_trigger/sch-account-bq-salesforce-connector_API_1
+
+		pi_trigger/sch-customer-credit-bq-salesforce-connector-prd
+
+
+***** QAS e UAT - considerar o id ambiente *****
+trigger integration 
+	endpointSalesforce e urlSalesForceJobId
+		https://pratidonaduzzi--uat.sandbox.my.salesforce.com/services/data/v61.0/jobs/ingest/
+	
+trigger environment trigger 
+	QAS / UAT
+
+connector
+	api_bigquery
+		https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-qas/queries
+	url_salesforce				
+		https://pratidonaduzzi--qas.sandbox.my.salesforce.com/services/data/v61.0/jobs/ingest/		
+	
+	apiBqInsertEndpoint
+		https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-qas/datasets/logs/tables/logs_apigee/insertAll		
+		
+***** PRD *****
+trigger integration trigger 
+	endpointSalesforce e urlSalesForceJobId
+		https://pratidonaduzzi.my.salesforce.com/services/data/v61.0/jobs/ingest/
+		
+
+getTokenSalesforce em Task Parameter
+trigger Trigger URL:  
+	https://get-token-salesforce-815032037994.southamerica-east1.run.app
+
+trigger environment
+	PRD
+
+connector
+	api_bigquery
+		https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-prd-447818/queries
+	
+	apiBqInsertEndpoint
+		https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-prd-447818/datasets/logs/tables/logs_apigee/insertAll
+
+	
+
+
+a2bbe000000DhlVAAS
+DeliveryLocation__c
+
+
+Bom dia.
+Foi uma hospede nossa!É uma Akita, bem idosa, que dorme aqui todo final de semana há meses. Ela consegue latir direito, entao parece esse uivo.
+Nunca fez isso, essa noite ficou inquieta querendo ir para o quintal e para dentro do quarto o tempo todo e latindo. 
+Por volta da 01:00h parou. Não sabemos o pq. De qq forma pedimos desculpas!
+
+

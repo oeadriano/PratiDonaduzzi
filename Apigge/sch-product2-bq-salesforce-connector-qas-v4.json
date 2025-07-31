@@ -1,0 +1,1537 @@
+{
+  "name": "projects/456210431144/locations/southamerica-east1/integrations/sch-product2-bq-salesforce-connector-qas/versions/17efafbb-aed9-45ac-9917-6d91d7a46ff6",
+  "description": "Processo responsável pela sincronização dos dados de produtos2 do salesforce",
+  "updateTime": "2025-03-21T13:21:04.296Z",
+  "createTime": "2025-03-21T12:40:19.650Z",
+  "lastModifierEmail": "sauter.adriano@pratidonaduzzi.com.br",
+  "triggerConfigs": [{
+    "label": "API Trigger",
+    "startTasks": [{
+      "taskId": "1"
+    }],
+    "properties": {
+      "Trigger name": "sch-product2-bq-salesforce-trigger_API_1"
+    },
+    "triggerType": "API",
+    "triggerNumber": "1",
+    "triggerId": "api_trigger/sch-product2-bq-salesforce-trigger_API_1",
+    "position": {
+      "x": -112,
+      "y": -192
+    },
+    "inputVariables": {
+      "names": ["page"]
+    },
+    "outputVariables": {
+      "names": ["containsData", "connectorOutput", "responseFinal", "responseEmptyValue", "nextPage", "job"]
+    }
+  }],
+  "taskConfigs": [{
+    "task": "JavaScriptTask",
+    "taskId": "1",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n  var pageNumber \u003d event.getParameter(\u0027page\u0027);\n  var limitNumber \u003d event.getParameter(\u0027limit\u0027);\n  var offsetNumber \u003d Number(pageNumber) * limitNumber;\n  var query \u003d {\n        query: `SELECT ProductCode,cgcloud__Consumer_Goods_Product_Code__c,cgcloud__Product_Short_Code__c,cgcloud__Consumer_Goods_External_Product_Id__c,cgcloud__Short_Description_Language_1__c,IsActive,cgcloud__State__c,cgcloud__GTIN__c,Name,cgcloud__Pack_Size__c,cgcloud__Description_1_Language_1__c,cgcloud__Product_Level__c,cgcloud__Delivery_Valid_From__c,cgcloud__Delivery_Valid_Thru__c,cgcloud__Field_Valid_From__c,cgcloud__Field_Valid_Thru__c,cgcloud__KAM_Valid_From__c,cgcloud__KAM_Valid_Thru__c,cgcloud__New_Item_Valid_From__c,cgcloud__New_Item_Valid_Thru__c,RecordTypeId,cgcloud__Product_Template__c FROM ds_view_trusted.vw_product2 order by ProductCode LIMIT ${limitNumber} OFFSET ${offsetNumber}`,\n    useLegacySql: false,\n    timeoutMs: 60000.0,\n  };\n  event.setParameter(\u0027bqSelectJson\u0027, query);\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "2"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "JavaScript Task Editor",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -112,
+      "y": -64
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "10",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"STRING_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$endpointSalesforce$\"\n        },\n        \"transformationFunctions\": [{\n          \"functionType\": {\n            \"stringFunction\": {\n              \"functionName\": \"CONCAT\"\n            }\n          },\n          \"parameters\": [{\n            \"initialValue\": {\n              \"referenceValue\": \"$JobId$\"\n            },\n            \"transformationFunctions\": [{\n              \"functionType\": {\n                \"stringFunction\": {\n                  \"functionName\": \"CONCAT\"\n                }\n              },\n              \"parameters\": [{\n                \"initialValue\": {\n                  \"literalValue\": {\n                    \"stringValue\": \"/batches\"\n                  }\n                }\n              }]\n            }, {\n              \"functionType\": {\n                \"stringFunction\": {\n                  \"functionName\": \"RESOLVE_TEMPLATE\"\n                }\n              }\n            }]\n          }]\n        }]\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$SalesforceUrl$\",\n      \"fieldType\": \"STRING_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "11"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Mapping URL SalesForce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 736
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "11",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_11_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"text/csv\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "Auth-Salesforce-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_11_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "PUT"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_11_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$SalesforceUrl$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "$transformerCSV$"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "12"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "PUT CSV Salesforce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 848
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "12",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"STRING_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$endpointSalesforce$\"\n        },\n        \"transformationFunctions\": [{\n          \"functionType\": {\n            \"stringFunction\": {\n              \"functionName\": \"CONCAT\"\n            }\n          },\n          \"parameters\": [{\n            \"initialValue\": {\n              \"referenceValue\": \"$JobId$\"\n            },\n            \"transformationFunctions\": [{\n              \"functionType\": {\n                \"stringFunction\": {\n                  \"functionName\": \"RESOLVE_TEMPLATE\"\n                }\n              }\n            }]\n          }]\n        }]\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$SalesforceUrl$\",\n      \"fieldType\": \"STRING_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "13"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Mapping URL Salesforce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 960
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "13",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_13_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"application/json\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "Auth-Salesforce-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_13_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "PATCH"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_13_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$SalesforceUrl$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "{\n   \"state\": \"UploadComplete\"\n}"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "14"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "PATCH CSV Salesforce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 1072
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "14",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"STRING_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$endpointSalesforce$\"\n        },\n        \"transformationFunctions\": [{\n          \"functionType\": {\n            \"stringFunction\": {\n              \"functionName\": \"CONCAT\"\n            }\n          },\n          \"parameters\": [{\n            \"initialValue\": {\n              \"referenceValue\": \"$JobId$\"\n            },\n            \"transformationFunctions\": [{\n              \"functionType\": {\n                \"stringFunction\": {\n                  \"functionName\": \"CONCAT\"\n                }\n              },\n              \"parameters\": [{\n                \"initialValue\": {\n                  \"literalValue\": {\n                    \"stringValue\": \"/failedResults/\"\n                  }\n                }\n              }]\n            }, {\n              \"functionType\": {\n                \"stringFunction\": {\n                  \"functionName\": \"RESOLVE_TEMPLATE\"\n                }\n              }\n            }]\n          }]\n        }]\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$SalesforceUrl$\",\n      \"fieldType\": \"STRING_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "15"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Mapping URL SalesForce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 1184
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "15",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n\n    var data \u003d Number(event.getParameter(\u0027sizeLength\u0027))\n    var pageNumber \u003d event.getParameter(\u0027page\u0027);\n    var limitNumber \u003d event.getParameter(\u0027limit\u0027);\n\n    var nextPageNumber \u003d Number(pageNumber) + 1;\n    \n    if(data \u003e\u003d limitNumber) {\n        event.setParameter(\u0027connectorOutput\u0027, \"executando\" )\n        event.setParameter(\u0027nextPage\u0027, parseInt(nextPageNumber).toFixed(0))\n    } else {\n        event.setParameter(\u0027connectorOutput\u0027, \"fim\")\n    }\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "16"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "JavaScript",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 1296
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "16",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_16_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"text/csv\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "Auth-Salesforce-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_16_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "GET"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_16_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$SalesforceUrl$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "18",
+      "condition": "$`Task_16_responseBody`$ \u003d \"\""
+    }, {
+      "taskId": "20",
+      "condition": "$`Task_16_responseBody`$ !\u003d \"\""
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Verify Errors Salesforce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 1424
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "17",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"STRING_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"literalValue\": {\n            \"stringValue\": \"\\\"{ \\\"message\\\": \\\"Integração chegou ao fim com erro\\\"}\\\"\"\n          }\n        }\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$responseFinal$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Data Mapping Final Errors",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -528,
+      "y": 1840
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "18",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"STRING_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"literalValue\": {\n            \"stringValue\": \"\\\"{ \\\"message\\\": \\\"Integração chegou ao fim sem erros\\\"}\\\"\"\n          }\n        }\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$responseFinal$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Data Mapping Final Success",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -128,
+      "y": 1552
+    }
+  }, {
+    "task": "EmailTask",
+    "taskId": "19",
+    "parameters": {
+      "Cc": {
+        "key": "Cc",
+        "value": {
+          "stringArray": {
+          }
+        }
+      },
+      "TextBody": {
+        "key": "TextBody",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "Bcc": {
+        "key": "Bcc",
+        "value": {
+          "stringArray": {
+          }
+        }
+      },
+      "AttachmentPath": {
+        "key": "AttachmentPath",
+        "value": {
+          "stringArray": {
+          }
+        }
+      },
+      "ThrowNoRequiredInputException": {
+        "key": "ThrowNoRequiredInputException",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "To": {
+        "key": "To",
+        "value": {
+          "stringValue": "$sendEmailTo$"
+        }
+      },
+      "Subject": {
+        "key": "Subject",
+        "value": {
+          "stringValue": "$sendEmailSubject$"
+        }
+      },
+      "BodyFormat": {
+        "key": "BodyFormat",
+        "value": {
+          "stringValue": "text"
+        }
+      },
+      "EmailConfigInput": {
+        "key": "EmailConfigInput",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.EmailConfig\"\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "17"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Send Email",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -528,
+      "y": 1744
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "2",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_2_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"application/json\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "bq-auth-service-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_2_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "POST"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_2_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$apiBqEndpoint$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "$bqSelectJson$"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "3"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Call REST BQ Product2 ",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -112,
+      "y": 32
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "20",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n\n    var errorBody \u003d event.getParameter(`Task_16_responseBody`);\n    var jobId \u003d event.getParameter(`jobId`);\n\n    var rows \u003d [{\n    \"json\": {\"jobId\": jobId, \"description\": errorBody, \"eventDate\": new Date().toISOString()}\n    }]\n\n    var body \u003d {\n        \"rows\": rows\n    };\n    event.setParameter(\u0027requestBody\u0027, JSON.stringify(body));\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "21"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Map SF error body",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -528,
+      "y": 1552
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "21",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_21_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"application/json\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "bq-auth-service-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_21_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "POST"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_21_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$apiBqInsertEndpoint$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "$requestBody$"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "19"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Call REST Endpoint",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -528,
+      "y": 1648
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "3",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n  var jsonData \u003d JSON.parse(event.getParameter(\u0027`Task_2_responseBody`\u0027));\n\n  function getData(jsonData) {\n    if (jsonData.rows) {\n      event.setParameter(\u0027containsData\u0027, true);\n      return jsonData.rows.map((jsonData) \u003d\u003e ({\n          ProductCode: jsonData.f[0].v,\n          cgcloud__Consumer_Goods_Product_Code__c: jsonData.f[1].v,\n          cgcloud__Product_Short_Code__c: jsonData.f[2].v,\n          cgcloud__Consumer_Goods_External_Product_Id__c: jsonData.f[3].v,\n          cgcloud__Short_Description_Language_1__c: jsonData.f[4].v,\n          IsActive: jsonData.f[5].v,\n          cgcloud__State__c: jsonData.f[6].v,\n          cgcloud__GTIN__c: jsonData.f[7].v,\n          Name: jsonData.f[8].v,\n          cgcloud__Pack_Size__c: jsonData.f[9].v,\n          cgcloud__Description_1_Language_1__c: jsonData.f[10].v,\n          cgcloud__Product_Level__c: jsonData.f[11].v,\n          cgcloud__Delivery_Valid_From__c: jsonData.f[12].v,\n          cgcloud__Delivery_Valid_Thru__c: jsonData.f[13].v,\n          cgcloud__Field_Valid_From__c: jsonData.f[14].v,\n          cgcloud__Field_Valid_Thru__c: jsonData.f[15].v,\n          cgcloud__KAM_Valid_From__c: jsonData.f[16].v,\n          cgcloud__KAM_Valid_Thru__c: jsonData.f[17].v,\n          cgcloud__New_Item_Valid_From__c: jsonData.f[18].v,\n          cgcloud__New_Item_Valid_Thru__c: jsonData.f[19].v,\n          RecordTypeId: jsonData.f[20].v,\n          //cgcloud__Product_Template__c: jsonData.f[20].v\n      }));\n    } else {\n      event.setParameter(\u0027containsData\u0027, false);\n      return [{}];\n    }\n  }\n  var outputData \u003d getData(jsonData);\n  event.setParameter(\u0027transformerResponse\u0027, outputData);\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "5",
+      "condition": "$containsData$ !\u003d true",
+      "displayName": "Contains Data?"
+    }, {
+      "taskId": "4",
+      "condition": "$containsData$ \u003d true",
+      "displayName": "Contains Data?"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Transformer JSON",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -112,
+      "y": 128
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "4",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n\n  var jsonObject \u003d event.getParameter(\"transformerResponse\"); \n  var length \u003d jsonObject.length\n  \n  function convertJSONToCSV(data) {\n  \n  var fields \u003d Object.keys(data[0]);\n  var replacer \u003d function(key, value) { return value \u003d\u003d\u003d null ? \u0027\u0027 : value } \n  var csv \u003d data.map(function(row){\n    return fields.map(function(fieldName){\n      return JSON.stringify(row[fieldName], replacer)\n    }).join(\u0027,\u0027)\n  })\n  csv.unshift(fields.join(\u0027,\u0027)) \n  csv \u003d csv.join(\u0027\\r\\n\u0027);\n  return csv\n  \n  }\n\n  const csvData \u003d convertJSONToCSV(jsonObject);\n  \n  event.setParameter(\"transformerResponse\", {})\n  \n  event.setParameter(\"transformerCSV\", csvData);\n  event.setParameter(\u0027sizeLength\u0027,parseInt(length).toFixed(0) )\n  \n  }"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "6"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Transformer Json to CSV",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 240
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "5",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n\n    event.setParameter(\u0027connectorOutput\u0027, \"fim\")\n    \n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "7"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Finish Process",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": 112,
+      "y": 240
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "6",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"JSON_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$upsertJSON$\"\n        }\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$InputSalesForce$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "8"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Data Mapping",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 368
+    }
+  }, {
+    "task": "FieldMappingTask",
+    "taskId": "7",
+    "parameters": {
+      "FieldMappingConfigTaskParameterKey": {
+        "key": "FieldMappingConfigTaskParameterKey",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.FieldMappingConfig\",\n  \"mappedFields\": [{\n    \"inputField\": {\n      \"fieldType\": \"JSON_VALUE\",\n      \"transformExpression\": {\n        \"initialValue\": {\n          \"referenceValue\": \"$emptyData$\"\n        }\n      }\n    },\n    \"outputField\": {\n      \"referenceKey\": \"$responseEmptyValue$\",\n      \"fieldType\": \"JSON_VALUE\",\n      \"cardinality\": \"OPTIONAL\"\n    }\n  }]\n}"
+        }
+      }
+    },
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Data Mapping 1",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": 112,
+      "y": 352
+    }
+  }, {
+    "task": "GenericRestV2Task",
+    "taskId": "8",
+    "parameters": {
+      "throwError": {
+        "key": "throwError",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "responseBody": {
+        "key": "responseBody",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_8_responseBody`$"]
+          }
+        }
+      },
+      "disableSSLValidation": {
+        "key": "disableSSLValidation",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "httpParams": {
+        "key": "httpParams",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.proto.ParameterMap\",\n  \"entries\": [{\n    \"key\": {\n      \"literalValue\": {\n        \"stringValue\": \"content-type\"\n      }\n    },\n    \"value\": {\n      \"literalValue\": {\n        \"stringValue\": \"application/json\"\n      }\n    }\n  }]\n}"
+        }
+      },
+      "authConfigName": {
+        "key": "authConfigName",
+        "value": {
+          "stringValue": "Auth-Salesforce-qas"
+        }
+      },
+      "authConfig": {
+        "key": "authConfig",
+        "value": {
+          "jsonValue": "{\n  \"@type\": \"type.googleapis.com/enterprise.crm.eventbus.authconfig.AuthConfigTaskParam\"\n}"
+        }
+      },
+      "responseHeader": {
+        "key": "responseHeader",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_8_responseHeader`$"]
+          }
+        }
+      },
+      "userAgent": {
+        "key": "userAgent",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "httpMethod": {
+        "key": "httpMethod",
+        "value": {
+          "stringValue": "POST"
+        }
+      },
+      "responseStatus": {
+        "key": "responseStatus",
+        "value": {
+          "stringArray": {
+            "stringValues": ["$`Task_8_responseStatus`$"]
+          }
+        }
+      },
+      "timeout": {
+        "key": "timeout",
+        "value": {
+          "intValue": "0"
+        }
+      },
+      "url": {
+        "key": "url",
+        "value": {
+          "stringValue": "$endpointSalesforce$"
+        }
+      },
+      "useSSL": {
+        "key": "useSSL",
+        "value": {
+          "booleanValue": false
+        }
+      },
+      "urlFetchingService": {
+        "key": "urlFetchingService",
+        "value": {
+          "stringValue": "HARPOON"
+        }
+      },
+      "urlQueryStrings": {
+        "key": "urlQueryStrings"
+      },
+      "requestorId": {
+        "key": "requestorId",
+        "value": {
+          "stringValue": ""
+        }
+      },
+      "jsonAdditionalHeaders": {
+        "key": "jsonAdditionalHeaders",
+        "value": {
+          "jsonValue": "null"
+        }
+      },
+      "requestBody": {
+        "key": "requestBody",
+        "value": {
+          "stringValue": "$InputSalesForce$"
+        }
+      },
+      "followRedirects": {
+        "key": "followRedirects",
+        "value": {
+          "booleanValue": true
+        }
+      },
+      "additionalHeaders": {
+        "key": "additionalHeaders"
+      }
+    },
+    "nextTasks": [{
+      "taskId": "9"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "Post Data SalesForce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 496
+    }
+  }, {
+    "task": "JavaScriptTask",
+    "taskId": "9",
+    "parameters": {
+      "javaScriptEngine": {
+        "key": "javaScriptEngine",
+        "value": {
+          "stringValue": "V8"
+        }
+      },
+      "script": {
+        "key": "script",
+        "value": {
+          "stringValue": "function executeScript(event) {\n\n    var getJobId \u003d JSON.parse(event.getParameter(\"`Task_8_responseBody`\")).id;\n    var pageNumber \u003d event.getParameter(\u0027page\u0027);\n    \n    var jobJson \u003d {\n        \u0027Page\u0027: pageNumber,\n        \u0027Job ID\u0027: getJobId\n    }\n    event.setParameter(\"JobId\", getJobId);\n    event.setParameter(\"job\", jobJson);\n}"
+        }
+      }
+    },
+    "nextTasks": [{
+      "taskId": "10"
+    }],
+    "taskExecutionStrategy": "WHEN_ALL_SUCCEED",
+    "displayName": "GetJobId SalesForce",
+    "externalTaskType": "NORMAL_TASK",
+    "position": {
+      "x": -320,
+      "y": 624
+    }
+  }],
+  "integrationParameters": [{
+    "key": "`ExecutionMode`",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": ""
+    },
+    "displayName": "`ExecutionMode`",
+    "isTransient": true
+  }, {
+    "key": "`ErrorInfo`",
+    "dataType": "JSON_VALUE",
+    "defaultValue": {
+      "jsonValue": "{\n  \"message\": \"\",\n  \"code\": 0.0\n}"
+    },
+    "displayName": "`ErrorInfo`",
+    "isTransient": true,
+    "jsonSchema": "{\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"code\": {\n      \"type\": \"number\"\n    },\n    \"message\": {\n      \"type\": \"string\"\n    }\n  }\n}"
+  }, {
+    "key": "`ExecutionId`",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": ""
+    },
+    "displayName": "`ExecutionId`",
+    "isTransient": true
+  }, {
+    "key": "`IntegrationName`",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": ""
+    },
+    "displayName": "`IntegrationName`",
+    "isTransient": true
+  }, {
+    "key": "`Region`",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": ""
+    },
+    "displayName": "`Region`",
+    "isTransient": true
+  }, {
+    "key": "`ProjectId`",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": ""
+    },
+    "displayName": "`ProjectId`",
+    "isTransient": true
+  }, {
+    "key": "`Task_2_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_2_responseHeader`",
+    "isTransient": true,
+    "producer": "1_2"
+  }, {
+    "key": "`Task_2_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_2_responseBody`",
+    "isTransient": true,
+    "producer": "1_2"
+  }, {
+    "key": "`Task_2_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_2_responseStatus`",
+    "isTransient": true,
+    "producer": "1_2"
+  }, {
+    "key": "bqSelectJson",
+    "dataType": "JSON_VALUE",
+    "displayName": "bqSelectJson"
+  }, {
+    "key": "containsData",
+    "dataType": "BOOLEAN_VALUE",
+    "displayName": "containsData",
+    "inputOutputType": "OUT"
+  }, {
+    "key": "connectorOutput",
+    "dataType": "STRING_VALUE",
+    "displayName": "connectorOutput",
+    "inputOutputType": "OUT"
+  }, {
+    "key": "responseFinal",
+    "dataType": "JSON_VALUE",
+    "displayName": "responseFinal",
+    "inputOutputType": "OUT",
+    "jsonSchema": "{\n  \"message\": \"Integração finalizada com sucesso!\"\n}"
+  }, {
+    "key": "responseEmptyValue",
+    "dataType": "JSON_VALUE",
+    "displayName": "responseEmptyValue",
+    "inputOutputType": "OUT"
+  }, {
+    "key": "nextPage",
+    "dataType": "STRING_VALUE",
+    "displayName": "nextPage",
+    "inputOutputType": "OUT"
+  }, {
+    "key": "job",
+    "dataType": "JSON_VALUE",
+    "displayName": "job",
+    "inputOutputType": "OUT"
+  }, {
+    "key": "emptyData",
+    "dataType": "JSON_VALUE",
+    "defaultValue": {
+      "jsonValue": "{\n  \"message\": \"Não existem dados para atualizar!\"\n}"
+    },
+    "displayName": "emptyData"
+  }, {
+    "key": "InputSalesForce",
+    "dataType": "JSON_VALUE",
+    "displayName": "InputSalesForce"
+  }, {
+    "key": "`Task_8_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_8_responseHeader`",
+    "isTransient": true,
+    "producer": "1_8"
+  }, {
+    "key": "`Task_8_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_8_responseBody`",
+    "isTransient": true,
+    "producer": "1_8"
+  }, {
+    "key": "`Task_8_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_8_responseStatus`",
+    "isTransient": true,
+    "producer": "1_8"
+  }, {
+    "key": "JobId",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "$jobId$"
+    },
+    "displayName": "JobId"
+  }, {
+    "key": "SalesforceUrl",
+    "dataType": "STRING_VALUE",
+    "displayName": "SalesforceUrl"
+  }, {
+    "key": "page",
+    "dataType": "STRING_VALUE",
+    "displayName": "page",
+    "inputOutputType": "IN"
+  }, {
+    "key": "`Task_11_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_11_responseHeader`",
+    "isTransient": true,
+    "producer": "1_11"
+  }, {
+    "key": "`Task_11_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_11_responseBody`",
+    "isTransient": true,
+    "producer": "1_11"
+  }, {
+    "key": "`Task_11_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_11_responseStatus`",
+    "isTransient": true,
+    "producer": "1_11"
+  }, {
+    "key": "transformerCSV",
+    "dataType": "STRING_VALUE",
+    "displayName": "transformerCSV"
+  }, {
+    "key": "`Task_13_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_13_responseHeader`",
+    "isTransient": true,
+    "producer": "1_13"
+  }, {
+    "key": "`Task_13_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_13_responseBody`",
+    "isTransient": true,
+    "producer": "1_13"
+  }, {
+    "key": "`Task_13_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_13_responseStatus`",
+    "isTransient": true,
+    "producer": "1_13"
+  }, {
+    "key": "`Task_16_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_16_responseHeader`",
+    "isTransient": true,
+    "producer": "1_16"
+  }, {
+    "key": "`Task_16_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_16_responseBody`",
+    "isTransient": true,
+    "producer": "1_16"
+  }, {
+    "key": "`Task_16_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_16_responseStatus`",
+    "isTransient": true,
+    "producer": "1_16"
+  }, {
+    "key": "sendEmailSubject",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "Integração \u0027sch-product2-bq-salesforce\u0027 com falha de integração com o Salesforce"
+    },
+    "displayName": "sendEmailSubject"
+  }, {
+    "key": "`Task_21_responseHeader`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_21_responseHeader`",
+    "isTransient": true,
+    "producer": "1_21"
+  }, {
+    "key": "`Task_21_responseBody`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_21_responseBody`",
+    "isTransient": true,
+    "producer": "1_21"
+  }, {
+    "key": "`Task_21_responseStatus`",
+    "dataType": "STRING_VALUE",
+    "displayName": "`Task_21_responseStatus`",
+    "isTransient": true,
+    "producer": "1_21"
+  }, {
+    "key": "requestBody",
+    "dataType": "STRING_VALUE",
+    "displayName": "requestBody"
+  }, {
+    "key": "apiBqEndpoint",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-qas/queries"
+    },
+    "displayName": "apiBqEndpoint"
+  }, {
+    "key": "endpointSalesforce",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "https://pratidonaduzzi--qas.sandbox.my.salesforce.com/services/data/v61.0/jobs/ingest/"
+    },
+    "displayName": "endpointSalesforce"
+  }, {
+    "key": "apiBqInsertEndpoint",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "https://bigquery.googleapis.com/bigquery/v2/projects/prj-dados-qas/datasets/logs/tables/logs_apigee/insertAll"
+    },
+    "displayName": "apiBqInsertEndpoint"
+  }, {
+    "key": "limit",
+    "dataType": "INT_VALUE",
+    "defaultValue": {
+      "intValue": "100"
+    },
+    "displayName": "limit",
+    "description": "Limite de registros para consulta"
+  }, {
+    "key": "sendEmailTo",
+    "dataType": "STRING_ARRAY",
+    "defaultValue": {
+      "stringArray": {
+        "stringValues": ["adriano.oliveira@sauter.digital"]
+      }
+    },
+    "displayName": "sendEmailTo"
+  }, {
+    "key": "urlSalesForceJobId",
+    "dataType": "STRING_VALUE",
+    "defaultValue": {
+      "stringValue": "https://pratidonaduzzi--qas.sandbox.my.salesforce.com/services/data/v61.0/jobs/ingest"
+    },
+    "displayName": "urlSalesForceJobId"
+  }, {
+    "key": "upsertJSON",
+    "dataType": "JSON_VALUE",
+    "defaultValue": {
+      "jsonValue": "{\n  \"operation\": \"upsert\",\n  \"object\": \"Product2\",\n  \"externalIdFieldName\": \"cgcloud__Consumer_Goods_External_Product_Id__c\",\n  \"contentType\": \"CSV\",\n  \"lineEnding\": \"CRLF\"\n}"
+    },
+    "displayName": "upsertJSON"
+  }],
+  "databasePersistencePolicy": "DATABASE_PERSISTENCE_ASYNC"
+}

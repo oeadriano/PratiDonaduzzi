@@ -1,0 +1,472 @@
+-- CV_IND_DOC_FAT_SCRIPT_ITEM
+-- VERSAO até 23/03/22 - anterior à correção de duplicidade de etl_remessa 
+with  
+  w_bol as ( 
+      SELECT MANDT,  
+             KNUMV,  
+             KPOSN,  
+             SUM(KWERT) AS KWERT  
+        FROM `dados-prod.raw.KONV_part` 
+        WHERE KSCHL = 'ZBOL'  
+          --AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -1 YEAR)
+          AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -2 MONTH)
+          AND KDATU_DT <= CURRENT_DATE
+        GROUP BY MANDT, KNUMV, KPOSN 
+  ), 
+  w_icmi as ( 
+      SELECT KNUMV --Nº condição do documento 
+            ,KPOSN --Item 
+            ,KWERT --Valor da Condição **** 
+            ,KBETR --Montante ****** 
+            ,WAERS --Moeda ***** 
+            ,KPEIN --Por ****** 
+            ,KMEIN --Unidade do Preço ***** 
+            ,KSCHL --Tp_Cond_Pr ***** 
+        FROM `dados-prod.raw.KONV_part` 
+        WHERE KSCHL IN ('ICMI' ) 
+          --AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -1 YEAR)
+          AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -2 MONTH)
+          AND KDATU_DT <= CURRENT_DATE
+        ORDER BY KNUMV, KPOSN  
+  ), 
+  w_ipi as ( 
+      SELECT KNUMV,  
+             KSCHL,  
+             KPOSN,  
+             SUM(KWERT) AS KWERT 
+        FROM `dados-prod.raw.KONV_part` 
+        WHERE KSCHL = 'BX23' 
+          --AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -1 YEAR)
+          AND KDATU_DT >= DATE_ADD(CURRENT_DATE, INTERVAL -2 MONTH)
+          AND KDATU_DT <= CURRENT_DATE
+          AND KWERT > 0 
+        GROUP BY KNUMV, KSCHL, KPOSN 
+        ORDER BY KNUMV    
+  ),
+  w_kna1 as (
+    select kunnr,
+           name1,
+           stcd1
+      from `dados-prod.raw.KNA1`
+  ),
+  w_ydsd217 as (
+        SELECT MANDT,
+               VBELN,
+               VENDEDOR,
+               EQUIPE_VENDAS as cad_supervisor,
+               CONCAT(VENDEDOR,EQUIPE_VENDAS) AS CHAVE_VC,
+          FROM dados-prod.raw.YDSD217 
+  )
+
+--CV_IND_DOC_FAT_SCRIPT_ITEM 
+SELECT 
+A.MANDT       AS MANDANTE,                        
+A.VBELN       AS DOC_FATUR, 
+C.VBELN       AS DOC_VENDA, 
+B.POSNR       AS DOC_ITEM, 
+B.PSTYV       AS CATEG_ITEM, 
+A.BUKRS       AS EMPRESA,  
+B.WERKS       AS CENTRO, 
+B.LGORT       AS DEPOSITO, 
+B.MATNR       AS MATNR, 
+CAST(B.MATNR AS INT)  AS COD_MATERIAL, 
+B.ARKTX       AS DESCR_MATERIAL, 
+A.KUNAG       AS CLIENTE,   
+A.XBLNR       AS DOC_NOTAFISCAL, 
+A.FKDAT       AS DT_FATUR, 
+PARSE_DATE("%Y%m%d",A.FKDAT) AS DT_FATUR_D,          
+C.ERDAT       AS DT_OV,   
+PARSE_DATE("%Y%m%d",C.ERDAT) AS DT_OV_D, 
+A.FKART       AS DOC_TIPO,   
+A.VKORG       AS ORG_VENDA, 
+A.VTWEG       AS CANAL_DISTR, 
+B.VKGRP       AS EQ_VENDAS, 
+B.VKBUR       AS ESCR_VENDA, 
+B.SPART       AS SET_ATIV, 
+A.ZTERM       AS COND_PAG, 
+B.VSTEL       AS LOC_EXP, 
+'Faturamento' AS COCKPIT, 
+SUBSTR(C.ERDAT,1,6) AS  ANOMES, 
+--SUBSTR(REPLACE(CAST(CURRENT_DATE AS STRING),'-',''),1,6) AS  ANOMES, 
+CASE WHEN ( A.FKART = 'ZBON' ) THEN 0 ELSE COALESCE(PMED.PRZMEDIO,0)  * ( Sum(B.MWSBP) + Sum(B.NETWR) - COALESCE(Sum(D.KWERT),0)) END AS VLR_PRZ_MEDIO, 
+COALESCE(SUM(B.FKLMG),0) AS QTDECALCULADA, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' )  THEN 0 ELSE COALESCE(Sum(B.MWSBP),0) END AS VLR_MONTIMPOSTO, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE COALESCE(Sum(B.NETWR),0) END AS VLR_LIQUIDO, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE COALESCE(KITEM.KWERT,0) - COALESCE(ICMSRET.VLR_ICMSRET,0) END AS VLR_PEDIDO, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE COALESCE(Sum(D.KWERT),0) END AS VLR_BOLETO, 
+--> VALOR_NF : ANTES DE EXISTIR OS BRINDES/ITENS DE BONIFICACAO A FORMULA ESTAVA OK ( 2020 ) 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE (COALESCE(SUM(B.MWSBP),0) + COALESCE(SUM(B.NETWR),0) - COALESCE(Sum(D.KWERT),0)) END AS VALOR_NF, 
+0 AS DEVOLUCAO_NF, 
+CASE WHEN (ESP.VALOR = 'YBP2' ) OR (ESP.VALOR = 'YBP3' ) THEN 0 ELSE COALESCE(PC.CUSTO,0) END AS CUSTO_UNIT, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE COALESCE(NFE.NETDIS, 0) END AS VLR_DESC_NF, 
+CASE WHEN ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN 0 ELSE COALESCE(ICMSRET.VLR_ICMSRET,0) END AS VLR_ICMSRET,    
+CASE WHEN ESP.DESCRICAO LIKE 'ESPECIAL%' THEN 0 ELSE SUM(COALESCE(IPI.KWERT,0)) END AS VLR_IPI, 
+CASE WHEN ( A.FKART = 'ZBON' ) OR ( ESP.DESCRICAO LIKE 'ESPECIAL%' ) THEN SUM(COALESCE(VLR_ST_BON.VLR_ST,0)) END AS VLR_ST_BON, 
+COALESCE(SUM(B.FKLMG),0) * CASE WHEN (ESP.VALOR = 'YBP2' ) OR (ESP.VALOR = 'YBP3' ) THEN 0 ELSE COALESCE(PC.CUSTO,0) END AS CUSTO_TOTAL , 
+A.ETL_TIMESTAMP AS ETL_VBRK, 
+C.ETL_TIMESTAMP AS ETL_VBAK, 
+L.ETL_TIMESTAMP AS ETL_LIPS,
+COALESCE(C.AUGRU,'') as augru, 
+COALESCE(C.BSTNK,'') as bstnk,  
+COALESCE(C.ERZET,'') AS DOC_VHORA,
+kna1.name1 as nome_cliente,
+kna1.stcd1 as cnpj_cliente,
+c.ernam,
+ydsd217.vendedor,
+ydsd217.cad_supervisor,
+ydsd217.chave_vc,
+current_timestamp as ETL_DOC_FAT 
+FROM dados-prod.raw.VBRP                   AS B 
+LEFT JOIN dados-prod.raw.VBRK AS A 
+ON    B.MANDT = A.MANDT 
+AND   B.VBELN = A.VBELN  
+LEFT JOIN dados-prod.raw.VBAK              AS C 
+ON    B.MANDT = C.MANDT 
+AND   B.AUBEL = C.VBELN 
+    /*-- LIPS --*/ 
+  LEFT JOIN `dados-prod.raw.LIPS`              AS L 
+  ON    B.MANDT   = L.MANDT 
+  AND   B.AUBEL   = L.VGBEL  
+  AND   B.AUPOS   = L.VGPOS  
+
+LEFT JOIN w_bol AS D 
+ON    B.MANDT = D.MANDT 
+AND   A.KNUMV = D.KNUMV 
+AND   B.POSNR = D.KPOSN  
+
+LEFT JOIN 
+  (SELECT SPRAS, ZTERM, VTEXT FROM dados-prod.raw.TVZBT  
+  WHERE SPRAS = 'P'  
+  )AS COND 
+ON A.ZTERM = COND.ZTERM 
+
+left join w_ydsd217 as ydsd217
+  ON ydsd217.mandt = c.MANDT
+ AND ydsd217.vbeln = c.VBELN
+
+left join w_kna1 as KNA1
+  on kna1.kunnr = A.KUNAG
+
+LEFT JOIN 
+  (SELECT MANDT 
+         ,TRIM(ZTERM)  AS ZTERM 
+         ,cast(TEXT1 as INT64) AS PRZMEDIO 
+   FROM `dados-prod.raw.T052U` 
+   WHERE SPRAS = 'P' 
+     AND MANDT = '500' 
+     AND SAFE_CAST(TEXT1 AS INT64) IS NOT NULL 
+)AS PMED 
+ON A.ZTERM = PMED.ZTERM 
+ 
+LEFT JOIN dados-prod.raw.YDBI003_SYS_BIC AS PC 
+ON  B.MATNR = PC.MATNR 
+AND CAST(EXTRACT(YEAR FROM PARSE_DATE("%Y%m%d",A.FKDAT))AS NUMERIC) = PC.ANO 
+AND CAST(EXTRACT(MONTH FROM CAST(CONCAT(SUBSTR(A.FKDAT, 0 , 4), '-' ,SUBSTR(A.FKDAT, 5 , 2), '-' , SUBSTR(A.FKDAT, 7 , 2)) AS DATE))AS NUMERIC) = PC.MES 
+
+LEFT JOIN w_icmi AS KITEM 
+  ON ( A.KNUMV = KITEM.KNUMV AND B.POSNR = KITEM.KPOSN ) 
+
+-- PRECISA SER INNER JOIN SENÃO O FILTRO DE DOCUMENTOS NÃO ESTORNADOS NÃO TEM EFEITO 
+INNER JOIN 
+  (SELECT DISTINCT A.DOCNUM,A.REFKEY,A.REFITM,A.NETDIS,B.CREDAT, B.CRETIM,B.CANCEL,B.DOCSTAT 
+  FROM dados-prod.raw.J_1BNFLIN AS A 
+    INNER JOIN dados-prod.raw.J_1BNFDOC AS B 
+    ON A.DOCNUM = B.DOCNUM 
+    WHERE   B.CANCEL <> 'X' 
+    AND ( B.DOCSTAT = '1'  
+      OR   B.DOCSTAT = '') 
+  )AS NFE 
+ON A.VBELN = NFE.REFKEY 
+AND B.POSNR = NFE.REFITM 
+
+LEFT JOIN 
+  (SELECT A.DOCNUM, A.ITMNUM, A.REFKEY, A.MANDT, B.VLR_ICMSRET 
+  FROM dados-prod.raw.J_1BNFLIN AS A 
+  INNER JOIN dados-prod.raw.YDSD_INFOST AS B 
+  ON A.MANDT  = B.MANDT 
+  AND A.DOCNUM = B.NUMDOC 
+  AND A.ITMNUM = B.NUMITEM 
+  ) AS ICMSRET 
+ON B.VBELN = ICMSRET.REFKEY 
+AND B.MANDT = ICMSRET.MANDT 
+AND B.POSNR = ICMSRET.ITMNUM   
+
+LEFT JOIN w_ipi AS IPI 
+ON (A.KNUMV = IPI.KNUMV  
+AND B.POSNR = IPI.KPOSN) 
+
+LEFT JOIN (SELECT * FROM dados-prod.visoes_YDBI_0006.CV_VLR_ST_BONIFICACAO_ANOMES) AS VLR_ST_BON 
+ON VLR_ST_BON.VBELN = B.VBELN 
+AND VLR_ST_BON.AUPOS = B.AUPOS 
+      
+------ zerando valores dos itens de bonificacao/brinde/amostra 
+LEFT JOIN  
+  (SELECT VALOR, DESCRICAO  
+  FROM dados-prod.raw.YDBI001 
+  WHERE RELATORIO = 'CARGA YDBI006_ITEM' 
+  AND FILTRO    = 'PSTYV' 
+  AND NOME_VIEW = 'CV_IND_VENDA_DASH_CARGA_ITEM' 
+  ORDER BY DESCRICAO 
+  ) AS ESP 
+ON B.PSTYV = ESP.VALOR 
+------ zerando valores dos itens de bonificacao/brinde/amostra      
+      
+WHERE A.FKART IN (SELECT VALOR FROM dados-prod.raw.YDBI001 
+                  WHERE RELATORIO = 'DASH_IND_GERENCIAIS' 
+                  AND FILTRO    = 'FKART' 
+                  AND DESCRICAO = 'FATURAMENTO' 
+                  ORDER BY VALOR ) 
+AND B.WERKS IN ( SELECT WERKS FROM dados-prod.raw.YDSD051 ) 
+AND A.FKSTO <> 'X' 
+AND A.SFAKN = '' 
+AND A.VTWEG <= '10' 
+AND B.FKIMG > 0 
+--AND C.ERDAT >= REPLACE(CAST(DATE_ADD((CURRENT_DATE), INTERVAL -1 YEAR)AS STRING),'-','')
+AND C.ERDAT >= REPLACE(CAST(DATE_ADD((CURRENT_DATE), INTERVAL -2 MONTH)AS STRING),'-','')
+AND C.ERDAT <= REPLACE(CAST(CURRENT_DATE AS STRING),'-','')  
+ 
+
+GROUP BY 
+A.MANDT,  
+A.BUKRS,  
+A.FKART,  
+A.FKDAT,  
+A.VKORG,  
+A.VTWEG,    
+B.VKGRP,  
+B.VKBUR, 
+A.ZTERM, 
+B.SPART,  
+B.WERKS,  
+B.LGORT,  
+B.VSTEL,  
+C.LIFSK,  
+A.KUNAG,  
+B.MATNR,   
+B.ARKTX, 
+PMED.PRZMEDIO, 
+B.FKIMG, 
+B.VRKME, 
+KITEM.KWERT, 
+KITEM.KBETR, 
+A.VBELN, 
+C.VBELN, 
+B.AUPOS, 
+B.POSNR, 
+B.PSTYV, 
+A.XBLNR, 
+C.ERDAT, 
+NFE.NETDIS, 
+ICMSRET.VLR_ICMSRET, 
+PC.CUSTO, 
+ESP.DESCRICAO, 
+ESP.VALOR, 
+A.ETL_TIMESTAMP, 
+C.ETL_TIMESTAMP , 
+L.ETL_TIMESTAMP,
+C.AUGRU, 
+C.BSTNK,
+C.ERZET,
+kna1.name1,
+kna1.stcd1,
+c.ernam,
+ydsd217.vendedor,
+ydsd217.cad_supervisor,
+ydsd217.chave_vc
+
+UNION ALL 
+
+SELECT 
+A.MANDT       AS MANDANTE,                        
+A.VBELN       AS DOC_FATUR, 
+C.VBELN       AS DOC_VENDA, 
+B.POSNR       AS DOC_ITEM, 
+B.PSTYV       AS CATEG_ITEM, 
+A.BUKRS       AS EMPRESA,  
+B.WERKS       AS CENTRO, 
+B.LGORT       AS DEPOSITO, 
+B.MATNR       AS MATNR, 
+CAST(B.MATNR AS INT)  AS COD_MATERIAL, 
+B.ARKTX       AS DESCR_MATERIAL, 
+A.KUNAG       AS CLIENTE,   
+A.XBLNR       AS DOC_NOTAFISCAL, 
+A.FKDAT       AS DT_FATUR, 
+PARSE_DATE("%Y%m%d",A.FKDAT) AS DT_FATUR_D, 
+C.ERDAT       AS DT_OV,   
+PARSE_DATE("%Y%m%d",C.ERDAT) AS DT_OV_D, 
+A.FKART       AS DOC_TIPO,   
+A.VKORG       AS ORG_VENDA, 
+A.VTWEG       AS CANAL_DISTR, 
+B.VKGRP       AS EQ_VENDAS, 
+B.VKBUR       AS ESCR_VENDA, 
+B.SPART       AS SET_ATIV, 
+A.ZTERM       AS COND_PAG, 
+B.VSTEL       AS LOC_EXP, 
+'Devolução'   AS COCKPIT, 
+SUBSTR(A.FKDAT,1,6) AS  ANOMES, 
+0 as VLR_PRZ_MEDIO, 
+COALESCE(SUM(B.FKLMG),0) AS qtdecalculada, 
+CASE WHEN A.FKART = 'ZRGF' THEN 0 ELSE COALESCE(Sum(B.MWSBP),0) END AS vlr_montimposto, 
+CASE WHEN A.FKART = 'ZRGF' THEN 0 ELSE COALESCE(Sum(B.NETWR),0) END AS vlr_liquido, 
+CASE WHEN A.FKART = 'ZRGF' THEN 0 ELSE COALESCE(KITEM.KWERT,0) - COALESCE(ICMSRET.VLR_ICMSRET,0) END AS vlr_pedido, 
+CASE WHEN A.FKART = 'ZRGF' THEN 0 ELSE COALESCE(Sum(D.KWERT),0) END AS vlr_boleto, 
+0 AS valor_nf, 
+--> DEVOLUCAO_NF : ANTES DE EXISTIR OS BRINDES/ITENS DE BONIFICACAO A FORMULA ESTAVA OK ( 2020 ) 
+CASE WHEN A.FKART = 'ZRGF' THEN  0 ELSE (COALESCE(SUM(B.MWSBP),0) + COALESCE(SUM(B.NETWR),0)) - COALESCE(Sum(D.KWERT),0) END AS devolucao_nf, 
+COALESCE(PC.CUSTO,0) AS custo_unit, 
+CASE WHEN A.FKART = 'ZRGF' THEN 0 ELSE COALESCE(NFE.NETDIS, 0) END AS vlr_desc_nf, 
+COALESCE(ICMSRET.VLR_ICMSRET,0) AS vlr_icmsret, 
+SUM(COALESCE(IPI.KWERT,0)) AS vlr_ipi, 
+CASE WHEN A.FKART = 'ZRGF' THEN SUM(COALESCE(VLR_ST_BON.VLR_ST,0)) END AS vlr_st_bon, 
+COALESCE(SUM(B.FKLMG),0) * COALESCE(PC.CUSTO,0) AS custo_total, 
+A.ETL_TIMESTAMP AS ETL_VBRK, 
+C.ETL_TIMESTAMP AS ETL_VBAK, 
+L.ETL_TIMESTAMP AS ETL_LIPS, 
+COALESCE(C.AUGRU,'') as augru, 
+COALESCE(C.BSTNK,'') as bstnk,  
+COALESCE(C.ERZET,'') AS DOC_VHORA,
+kna1.name1 as nome_cliente,
+kna1.stcd1 as cnpj_cliente,
+c.ernam,
+ydsd217.vendedor,
+ydsd217.cad_supervisor,
+ydsd217.chave_vc,
+current_timestamp as ETL_DOC_FAT 
+
+FROM dados-prod.raw.VBRK                   AS A 
+LEFT JOIN dados-prod.raw.VBRP              AS B 
+ON    A.MANDT = B.MANDT 
+AND   A.VBELN = B.VBELN 
+
+LEFT JOIN dados-prod.raw.VBAK              AS C 
+ON    B.MANDT = C.MANDT 
+AND   B.AUBEL = C.VBELN 
+
+left join w_ydsd217 as ydsd217
+  ON ydsd217.mandt = c.MANDT
+ AND ydsd217.vbeln = c.VBELN
+
+    /*-- LIPS --*/ 
+  LEFT JOIN `dados-prod.raw.LIPS`              AS L 
+  ON    B.MANDT   = L.MANDT 
+  AND   B.AUBEL   = L.VGBEL  
+  AND   B.AUPOS   = L.VGPOS    
+
+left join w_kna1 as KNA1
+  on kna1.kunnr = A.KUNAG
+
+LEFT JOIN w_bol AS D 
+ON    B.MANDT = D.MANDT 
+AND   A.KNUMV = D.KNUMV 
+AND   B.POSNR = D.KPOSN  
+
+LEFT JOIN 
+  (SELECT SPRAS, ZTERM, VTEXT  
+  FROM dados-prod.raw.TVZBT  
+  WHERE SPRAS = 'P'  
+  )AS COND 
+ON A.ZTERM = COND.ZTERM 
+
+LEFT JOIN dados-prod.raw.YDBI003_SYS_BIC AS PC 
+ON  B.MATNR = PC.MATNR 
+AND CAST(EXTRACT(YEAR FROM PARSE_DATE("%Y%m%d",A.FKDAT))AS NUMERIC) = PC.ANO 
+AND CAST(EXTRACT(MONTH FROM CAST(CONCAT(SUBSTR(A.FKDAT, 0 , 4), '-' ,SUBSTR(A.FKDAT, 5 , 2), '-' , SUBSTR(A.FKDAT, 7 , 2)) AS DATE))AS NUMERIC) = PC.MES 
+
+LEFT JOIN w_icmi AS KITEM 
+ON (A.KNUMV = KITEM.KNUMV AND B.POSNR = KITEM.KPOSN ) 
+
+-- PRECISA SER INNER JOIN SENÃO O FILTRO DE DOCUMENTOS NÃO ESTORNADOS NÃO TEM EFEITO 
+INNER JOIN 
+  (SELECT DISTINCT A.DOCNUM, A.REFKEY, A.REFITM, A.NETDIS, B.CREDAT, B.CRETIM, B.CANCEL, B.DOCSTAT 
+  FROM dados-prod.raw.J_1BNFLIN AS A 
+  INNER JOIN dados-prod.raw.J_1BNFDOC AS B 
+  ON A.DOCNUM = B.DOCNUM 
+  WHERE B.CANCEL <> 'X' 
+  AND ( B.DOCSTAT = '1'  
+    OR   B.DOCSTAT = '') 
+  )AS NFE 
+ON A.VBELN = NFE.REFKEY 
+AND B.POSNR = NFE.REFITM    
+
+LEFT JOIN  
+  (SELECT A.DOCNUM, A.ITMNUM, A.REFKEY, A.MANDT, B.VLR_ICMSRET 
+  FROM dados-prod.raw.J_1BNFLIN AS A 
+  INNER JOIN dados-prod.raw.YDSD_INFOST AS B 
+  ON A.MANDT  = B.MANDT 
+  AND A.DOCNUM = B.NUMDOC 
+  AND A.ITMNUM = B.NUMITEM 
+  ) AS ICMSRET 
+ON B.VBELN = ICMSRET.REFKEY 
+AND B.MANDT = ICMSRET.MANDT 
+AND B.POSNR = ICMSRET.ITMNUM   
+
+LEFT JOIN w_ipi AS IPI 
+ON (A.KNUMV = IPI.KNUMV  
+AND B.POSNR = IPI.KPOSN) 
+
+LEFT JOIN ( SELECT * FROM `dados-prod.visoes_YDBI_0006.CV_VLR_ST_BONIFICACAO_ANOMES`) AS VLR_ST_BON 
+ON VLR_ST_BON.VBELN = B.VBELN 
+AND VLR_ST_BON.AUPOS = B.AUPOS    
+WHERE  
+A.FKART IN (SELECT VALOR FROM dados-prod.raw.YDBI001 
+              WHERE RELATORIO = 'DASH_IND_GERENCIAIS'  
+              AND FILTRO    = 'FKART' 
+                        AND DESCRICAO = 'DEVOLUCAO' 
+                      ORDER BY VALOR ) 
+AND   A.FKSTO <> 'X' 
+AND   A.SFAKN = '' 
+AND   B.WERKS IN ( SELECT WERKS FROM dados-prod.raw.YDSD051 ) 
+AND   B.SHKZG  = 'X' 
+AND   C.LIFSK NOT IN ('ZB') 
+AND   A.VTWEG <= '10' 
+AND   B.FKIMG > 0 
+--AND C.ERDAT >= REPLACE(CAST(DATE_ADD((CURRENT_DATE), INTERVAL -1 YEAR)AS STRING),'-','')
+AND C.ERDAT >= REPLACE(CAST(DATE_ADD((CURRENT_DATE), INTERVAL -2 MONTH)AS STRING),'-','')
+AND C.ERDAT <= REPLACE(CAST(CURRENT_DATE AS STRING),'-','') 
+
+GROUP BY A.MANDT, 
+         A.BUKRS,  
+         A.FKART,  
+         A.FKDAT,  
+         A.VKORG,  
+         A.VTWEG,    
+         B.VKGRP,  
+         B.VKBUR, 
+         A.ZTERM, 
+         B.SPART,  
+         B.WERKS,  
+         B.LGORT,  
+         B.VSTEL,  
+         C.LIFSK,  
+         A.KUNAG,  
+         B.MATNR,   
+         B.ARKTX, 
+         B.FKIMG, 
+         B.VRKME, 
+         KITEM.KWERT, 
+         KITEM.KBETR, 
+         A.VBELN, 
+         C.VBELN, 
+         B.AUPOS, 
+         B.POSNR, 
+         B.PSTYV, 
+         A.XBLNR, 
+         C.ERDAT, 
+         NFE.NETDIS, 
+         ICMSRET.VLR_ICMSRET, 
+         PC.CUSTO, 
+         A.ETL_TIMESTAMP, 
+         C.ETL_TIMESTAMP , 
+         L.ETL_TIMESTAMP,
+         C.AUGRU, 
+         C.BSTNK,
+         C.ERZET,
+         kna1.name1,
+         kna1.stcd1,
+         c.ernam,
+         ydsd217.vendedor,
+         ydsd217.cad_supervisor,
+         ydsd217.chave_vc
+
+
+;

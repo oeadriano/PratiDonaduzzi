@@ -1,0 +1,54 @@
+SELECT E_SALESDOCUMENT, T_ITEM_OV.I_WERKS, T_ITEM_OV.TABELA
+FROM `dados-dev.raw_cimed_tech.ct_pedidos_auxiliar`, UNNEST(T_ITEM_OV) as T_ITEM_OV 
+LIMIT 1000
+Bruno Mattos10:40
+
+https://cloud.google.com/bigquery/streaming-data-into-bigquery#bigquery_table_insert_rows-nodejs
+
+Ygo Leite10:46
+https://github.com/googleapis/nodejs-bigquery/blob/main/samples/insertRowsAsStream.js
+
+{
+	"e_salesdocument": "0004783610",
+	"cabecalho": {
+		"i_bukrs": "3000",
+		"i_werks": "3000",
+		"docvendas": "ZNOR",
+		"orgvendas": "3000",
+		"canal": "10",
+		"pedido": "CT-20220401-d",
+		"datapedido": "2021-12-20",
+		"cnpjcliente": "20094175000112",
+		"condpg": "1000",
+		"cnpjvendedor": "04825103000141",
+		"observacao": "teste",
+		"cod_gama": "",
+		"valid_est": "",
+		"pedcliente": "compra-12345"
+	},
+		"t_item_ov": [
+			{
+				"pedido": "",
+				"item": "000010",
+				"produto": "100120",
+				"quantidade": 800,
+				"precounitario": 9.3,
+				"i_werks": "3000",
+				"promocao": "",
+				"tabela": "ZPGG",
+				"lgort": "3006"
+			},
+			{
+				"pedido": "",
+				"item": "000020",
+				"produto": "100069",
+				"quantidade": 200,
+				"precounitario": 5.2,
+				"i_werks": "3000",
+				"promocao": "",
+				"tabela": "ZPGG",
+				"lgort": "3006"
+			}
+		]
+	}	
+}

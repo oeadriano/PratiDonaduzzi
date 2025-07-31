@@ -1,0 +1,159 @@
+{
+    "data": [
+        {
+            "lifnr": "0000604426",
+            "cpf_cnpj": "43461456000161",
+            "email": "isaias.fellipee@gmail.com",
+            "contrato": "Y1",
+            "nome": "ISAIAS JORGE 14420204826",
+            "endereco": "RUA REVERENDO WALDEMAR WEY 30",
+            "responsavel": "ISAIAS JORGE 14420204826",
+            "cep": "18208-415",
+            "contato": "ISAIAS JORGE 14420204826",
+            "indicadores": [
+                {
+                    "nome": "Oportunidade de Faturamento",
+                    "atual": 36846.49,
+                    "percentual": 0.0,
+                    "total": 0.0,
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    },
+                    "filhos": [
+                        {
+                            "nome": "Remédios",
+                            "total": 20000,
+                            "atual": 10000,
+                            "percentual": 21.74,
+                            "cores": {
+                                "cor": "#FF0000"
+                            }
+                        },
+                        {
+                            "nome": "OTC",
+                            "total": 30000,
+                            "atual": 15000,
+                            "percentual": 50.0,
+                            "cores": {
+                                "cor": "#FF0000"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "nome": "Faseamento",
+                    "atual": 35800.0,
+                    "percentual": 29.83,
+                    "total": 120000.0,
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    }
+                },
+                {
+                    "nome": "comissao",
+                    "atual": null,
+                    "anterior": null,
+                    "percentual": 0.0,
+                    "total": 0.0,
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    },
+                    "filhos": [
+                        {
+                            "nome": "Remédios",
+                            "total": 7,
+                            "atual": 5.6,
+                            "percentual": 80,
+                            "cores": {
+                                "cor": "#FF0000"
+                            }
+                        },
+                        {
+                            "nome": "OTC",
+                            "total": 4,
+                            "atual": 2.6,
+                            "percentual": 65,
+                            "cores": {
+                                "cor": "#FFFF00"
+                            }
+                        },
+                        {
+                            "nome": "VITAMINAS",
+                            "total": 5,
+                            "atual": 3.6,
+                            "percentual": 65,
+                            "cores": {
+                                "cor": "#FFFF00"
+                            }
+                        },
+                        {
+                            "nome": "DERMOCOSMETICOS",
+                            "total": 4,
+                            "atual": 2.6,
+                            "percentual": 65,
+                            "cores": {
+                                "cor": "#008000"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "nome": "positivação",
+                    "atual": 42.0,
+                    "percentual": 50.0,
+                    "total": 84.0,
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    }
+                },
+                {
+                    "nome": "mix de produtos",
+                    "atual": 13.0, -- do mes
+                    "percentual": 50.0,
+                    "total": 26.0, -- meta
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    }
+                },
+                {
+                    "nome": "oportunidade de credito",
+                    "atual": 71656.08,
+                    "percentual": 16.82,
+                    "total": 426059.05,
+                    "cores": {
+                        "primeira": "#FF0000",
+                        "segunda": "#FFFF00",
+                        "terceira": "#008000"
+                    }
+                }
+            ],
+            "empresa": [
+                {
+                    "vkorg": "1000",
+                    "werks": "1005",
+                    "lgort": "1016"
+                },
+                {
+                    "vkorg": "3000",
+                    "werks": "3000",
+                    "lgort": "3006"
+                },
+                {
+                    "vkorg": "3700",
+                    "werks": "3700",
+                    "lgort": "3706"
+                }
+            ]
+        }
+    ]
+}

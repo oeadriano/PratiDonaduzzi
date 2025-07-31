@@ -1,0 +1,39 @@
+[
+  {
+    "cabecalho": {
+      "cnpjvendedor": "30110752805",
+      "condpg": "1002",
+      "pedido": "CT-1642627264413",
+      "valid_est": "",
+      "cnpjcliente": "10473483000103",
+      "canal": "07",
+      "pedcliente": "",
+      "observacao": "",
+      "orgvendas": "3000",
+      "datapedido": "2022-01-19",
+      "docvendas": "ZNOR",
+      "cod_gama": "157",
+      "i_werks": "3000",
+      "i_bukrs": "3000",
+      "sapIdClient": "0001081667",
+      "representante": "0000700953",
+      "razao_social": "MEGA FARMA UNAMAR LTDA / AVENIDA INDEPENDENCIA 21"
+    },
+    "itens": [
+      {
+        "lgort": "3006",
+        "promocao": "",
+        "tabela": "ZPGG",
+        "i_werks": "3000",
+        "pedido": null,
+        "precounitario": "9.63",
+        "item": "0",
+        "produto": "000000000000101521",
+        "quantidade": "72"
+      }
+    ],
+    "e_salesdocument": "0005199977",
+    "etl_timestamp": "19/01/2022 18:21:21",
+    "integrador": "CimedTech"
+  }
+]
