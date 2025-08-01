@@ -1,83 +1,68 @@
-
 CREATE OR REPLACE TABLE FUNCTION `prj-dados-prd-447818.ds_view_trusted.fn_cgcloud__order__item__c_carga`(d_ini DATE, d_fim DATE) RETURNS TABLE<cgcloud__order_ExternalId__c STRING, cgcloud__Product_externalid STRING, ExternalID__c STRING, ItemSAP__c STRING, item_category STRING, cgcloud__Quantity__c NUMERIC, ActualUnitValue__c NUMERIC, cgcloud__Base_Price_Receipt__c NUMERIC, cgcloud__Special_Price__c NUMERIC, SubstituicaoTributariaSAP__c NUMERIC, DiscountSAP__c NUMERIC, InternalComission__c NUMERIC, TotalInvoicedAmount__c NUMERIC, ActualMargin__c NUMERIC, MarginTax__c NUMERIC, MarginTaxSAP__c NUMERIC, MarginTaxCTB__c NUMERIC, MarginTaxCTBSAP__c NUMERIC, InvoiceNumber__c STRING, BillingDate__c DATE, DataAcordada__c DATE, ICMSSAP__c NUMERIC, cgcloud__Price_Receipt__c NUMERIC> AS (
 WITH w_vbrk as (
   SELECT vbrk.vbeln, vbrk.erdat, 
   case 
-    when vbrk.fkart in (
-      -- vendas
-      'YBOR', --Venda Normal
-      'YEXP', --Fatura Exportação
-      'YMGD', --Vend.MG Preço Margem
-      'YRCS', --Rem.p/ cta. s.fatura
-      'YSER', --Serviço s/ Retenção
-      'YDEP' --Fatura Ordem BR    
-    ) then 'FAT' else 'DEV'
-    end as tipo
+      when vbrk.fkart in (
+          'YBOR', --Venda Normal
+          'YBON', --Bonificacao         
+          'YEXP', --Fatura Exportação
+          'YMGD', --Vend.MG Preço Margem
+          'YRCS', --Rem.p/ cta. s.fatura
+          'YSER', --Serviço s/ Retenção
+          'YDEP' --Fatura Ordem BR
+      ) then 'FAT' 
+      else 'DEV'
+    end as tipo         
   FROM `sap_raw.vbrk` as vbrk
   WHERE 
       vbrk.fkdat between d_ini and d_fim
       --vbrk.fkdat between '2025-07-01' and '2025-07-05'
       AND vbrk.fkart IN
       (
-      -- devoluções
-      'YBOD', --Dev. Bonific. NF Cli
-      'YBOE', --Dev. Bonific. NF Pro
-      'YBRB', --D.Norm/Lic.Ind.NF.Cl
-      'YBRO', --D.Norm/Lic.Ind.NF.Pr
-      'YEXO', --Devolução Exportação
-      'YNFE', --D.Norm/Lic.Ind.NFECL
-      'YREC', --Dev.Repos.NF.Cliente
-      'YTR1', --T.Norm/Lic.Ind.NF.Pr
-      'YREM', --Dev.Repos.NF.Própria
-      -- vendas
-      'YBOR', --Venda Normal
-      'YEXP', --Fatura Exportação
-      'YMGD', --Vend.MG Preço Margem
-      'YRCS', --Rem.p/ cta. s.fatura
-      'YSER', --Serviço s/ Retenção
-      'YDEP' --Fatura Ordem BR
-      )
+        -- devoluções
+        'YBOD', --Dev. Bonific. NF Cli
+        'YBOE', --Dev. Bonific. NF Pro
+        'YBRB', --D.Norm/Lic.Ind.NF.Cl
+        'YBRO', --D.Norm/Lic.Ind.NF.Pr
+        'YEXO', --Devolução Exportação
+        'YNFE', --D.Norm/Lic.Ind.NFECL
+        'YREC', --Dev.Repos.NF.Cliente
+        'YTR1', --T.Norm/Lic.Ind.NF.Pr
+        'YREM', --Dev.Repos.NF.Própria
+        -- faturas
+        'YBOR', --Venda Normal
+        'YBON', --Bonificacao         
+        'YEXP', --Fatura Exportação
+        'YMGD', --Vend.MG Preço Margem
+        'YRCS', --Rem.p/ cta. s.fatura
+        'YSER', --Serviço s/ Retenção
+        'YDEP' --Fatura Ordem BR
+        )   
       AND vbrk.vkorg <> '0080'
       AND coalesce(vbrk.sfakn,'') = ''      
       AND coalesce(vbrk.fksto,'') <> 'X'
 ),      
 w_vbak as (
   SELECT vbak.vbeln, vbak.erdat, 
-  case 
-    when vbak.auart in (
-      -- vendas
-      'YBOR', --Venda Normal
-      'YEXP', --Fatura Exportação
-      'YMGD', --Vend.MG Preço Margem
-      'YRCS', --Rem.p/ cta. s.fatura
-      'YSER', --Serviço s/ Retenção
-      'YDEP' --Fatura Ordem BR    
-    ) then 'FAT' else 'DEV'
-    end as tipo
+      case 
+        when vbak.auart in (
+          'YVOL' --Venda Operador
+        ) then 'FAT' 
+    else 'DEV'
+  end as tipo 
+
   FROM `sap_raw.vbak` AS vbak 
   WHERE 
   --vbak.erdat between '2025-07-01' and '2025-07-05'
     vbak.erdat between d_ini and d_fim
     and vbak.auart IN 
     (
-       -- devoluções 
-      'YBOD', --Dev. Bonific. NF Cli
-      'YBOE', --Dev. Bonific. NF Pro
-      'YBRB', --D.Norm/Lic.Ind.NF.Cl
-      'YBRO', --D.Norm/Lic.Ind.NF.Pr
-      'YEXO', --Devolução Exportação
-      'YNFE', --D.Norm/Lic.Ind.NFECL
-      'YREC', --Dev.Repos.NF.Cliente
-      'YTR1', --T.Norm/Lic.Ind.NF.Pr
-      'YREM', --Dev.Repos.NF.Própria
-      -- vendas
-      'YBOR', --Venda Normal
-      'YEXP', --Fatura Exportação
-      'YMGD', --Vend.MG Preço Margem
-      'YRCS', --Rem.p/ cta. s.fatura
-      'YSER', --Serviço s/ Retenção
-      'YDEP'  --Fatura Ordem BR
-    )
+      -- devoluções
+      'YDOL', --Dev. Op.Log
+      -- faturas
+      'YVOL'  --Venda Operador
+      )           
+
     and vbak.ihrez not like 'SF-%'  
      
 )/*, w_lista_documentos as (

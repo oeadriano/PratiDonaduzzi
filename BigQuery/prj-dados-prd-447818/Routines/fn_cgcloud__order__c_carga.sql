@@ -39,7 +39,7 @@ WITH
          --vbrk.fkdat between '2025-07-01' and '2025-07-05'
          AND vbrk.fkart in (
          -- devoluções
-         'YBOD', --Dev. Bonific. NF Cli
+          'YBOD', --Dev. Bonific. NF Cli
          'YBOE', --Dev. Bonific. NF Pro
          'YBRB', --D.Norm/Lic.Ind.NF.Cl
          'YBRO', --D.Norm/Lic.Ind.NF.Pr
@@ -50,7 +50,6 @@ WITH
          'YREM', --Dev.Repos.NF.Própria
          -- faturas
          'YBOR', --Venda Normal
-         'YVOL', --Venda Operador
          'YBON', --Bonificacao         
          'YEXP', --Fatura Exportação
          'YMGD', --Vend.MG Preço Margem
@@ -91,15 +90,7 @@ WITH
             vbkd.zlsch,
             case 
                when vbak.auart in (
-                  'YBOR', --Venda Normal, 
-                  'YVOL', --Venda Operador
-                  'YBON', --Bonificacao
-                  'YEXP', --Fatura Exportação
-                  'YMGD', --Vend.MG Preço Margem
-                  'YRCS', --Rem.p/ cta. s.fatura
-                  'YSER', --Serviço s/ Retenção
-                  'YDEP' --Fatura Ordem BR
-
+                  'YVOL' --Venda Operador               
                ) then 'FAT' 
             else 'DEV'
          end as tipo 
@@ -114,26 +105,12 @@ WITH
             --vbak.erdat between '2025-07-01' and '2025-07-05'
              vbak.erdat between d_ini and d_fim
             AND vbak.auart in (
-               -- devoluções
-               'YBOD', --Dev. Bonific. NF Cli
-               'YBOE', --Dev. Bonific. NF Pro
-               'YBRB', --D.Norm/Lic.Ind.NF.Cl
-               'YBRO', --D.Norm/Lic.Ind.NF.Pr
-               'YEXO', --Devolução Exportação
-               'YNFE', --D.Norm/Lic.Ind.NFECL
-               'YREC', --Dev.Repos.NF.Cliente
-               'YTR1', --T.Norm/Lic.Ind.NF.Pr
-               'YREM', --Dev.Repos.NF.Própria
-               -- faturas
-               'YBOR', --Venda Normal
-               'YVOL', --Venda Operador
-               'YBON', --Bonificacao               
-               'YEXP', --Fatura Exportação
-               'YMGD', --Vend.MG Preço Margem
-               'YRCS', --Rem.p/ cta. s.fatura
-               'YSER', --Serviço s/ Retenção
-               'YDEP' --Fatura Ordem BR
+            -- devoluções
+            'YDOL', --Dev. Op.Log
+            -- faturas
+            'YVOL'  --Venda Operador
             )            
+
             and coalesce(vbak.ihrez, '') not like 'SF-%'     
          -- order BY vbeln
          ),
@@ -371,6 +348,9 @@ w_customer_invoice as (
          LEFT JOIN w_vbpa     AS vbpa     ON vbpa.vbeln = vbak.vbeln
 
          LEFT JOIN w_ztbsd040 AS ztbsd040 ON ztbsd040.vbeln = vbak.vbeln 
+
+      WHERE
+         wh.EmpresaOperador__c <> 'Empresa'         
       
    ) 
   -- pedidos YVOL - operador logistico
