@@ -1,4 +1,5 @@
-
+CREATE VIEW `prj-dados-prd-447818.ds_view_trusted.vw_customer_invoice`
+AS 
 WITH
   w_lista_base AS 
   (
@@ -132,4 +133,4 @@ WITH
    WHERE vbak.origem = 'O'
       and vbkd.fkdat >= date_sub(current_date, interval 30 day)
       and vbak.erdat >= date_sub(current_date, interval 30 day)         
-      and vbak.ihrez not like 'SF-%'
+      and vbak.ihrez not like 'SF-%';

@@ -1,5 +1,5 @@
-
-WITH w_vbrk as (
+CREATE VIEW `prj-dados-prd-447818.ds_view_trusted.vw_cgcloud__order_hist_item_dia`
+AS WITH w_vbrk as (
   SELECT vbrk.vbeln, vbrk.erdat
   FROM `sap_raw.vbrk` as vbrk
   WHERE 
@@ -191,4 +191,4 @@ SELECT
   
   coalesce(netwr_item, 0) + coalesce(mwsbp_item, 0) as cgcloud__Price_Receipt__c, -- impostos??      
 FROM 
-  w_customer_invoice_items
+  w_customer_invoice_items;

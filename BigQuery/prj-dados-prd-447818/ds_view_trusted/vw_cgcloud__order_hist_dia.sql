@@ -1,5 +1,5 @@
-
-WITH
+CREATE VIEW `prj-dados-prd-447818.ds_view_trusted.vw_cgcloud__order_hist_dia`
+AS WITH
    w_vbrk as (
       SELECT  'S' as origem,
           vbrk.vbeln,
@@ -394,3 +394,4 @@ w_customer_invoice as (
       usuario_esfera, usuario_esfera, waerk, pedido_esfera, origem, cgcloud__Payment_Method__c, vtweg, tipo
 
 order by SAPOrderNumber__c
+;

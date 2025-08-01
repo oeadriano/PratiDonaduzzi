@@ -1,4 +1,5 @@
-WITH
+CREATE VIEW `prj-dados-prd-447818.ds_view_trusted.vw_customer_invoice_base`
+AS WITH
   w_data_corte as (
      select date_sub(current_date, interval 1 day ) as dt_ini
   ),
@@ -112,6 +113,6 @@ WITH
           and vbkd.vbeln = vbak.vbeln
   --AEO 190625 - somente documentos da picklist cgcloud__Document_Type__c
   -- WHERE vbak.auart IN ('YVOL','YDOL')
-   WHERE vbak.auart IN ('YVOL', 'YBOR', 'YBON')   
+   WHERE vbak.auart IN ('YVOL')   
    AND vbak.erdat >= (select dt_ini from w_data_corte)
-   AND vbkd.fkdat >= (select dt_ini from w_data_corte)
+   AND vbkd.fkdat >= (select dt_ini from w_data_corte);
